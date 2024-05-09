@@ -122,8 +122,6 @@ export default class Slide {
   // Evento de pause do slide
   // Problema ocorrido: apenas qualquer click está fazendo com que seja pausado o slide
   pause() {
-    console.log('pausado');
-    
     // Pausar configurações padròes do browser
     document.body.classList.add("paused");
     // Identificar o momento em que houve o pause, e barrar a manipulação via next() e prev()
@@ -143,8 +141,6 @@ export default class Slide {
   }
 
   continue() {
-    console.log('continuado');
-
     // Remover configs padrões
     document.body.classList.remove("paused");
     //Limpar timeout do pause anterior
