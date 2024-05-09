@@ -3,6 +3,17 @@ body {
   margin: 20px;
 }
 
+/* Configuração para remover algumas config padroes dos navs que interferem no slide*/
+body.paused {
+  /* Remove a possiblidade de seleção de qualuqer coisa no site*/
+  user-select: none;
+  -webkit-user-select: none;
+  /* Remover ajuste de tela*/
+  text-size-adjust: none;
+  -webkit-text-size-adjust: none;
+  touch-action: manipulation;
+}
+
 img, video {
   display: block;
   max-width: 100%;
@@ -15,6 +26,11 @@ h1 {
 
 #slide {
   display: grid;
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 20px auto;
+  max-width: 800px;
+  background: black;
 }
 
 #slide-elements {
@@ -34,6 +50,7 @@ h1 {
 }
 
 #slide-controls {
+  position: relative;
   grid-area: 1/1;
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -43,4 +60,42 @@ h1 {
   opacity: 0;
   appearance: none;
   -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+
+#slide-thumb {
+  display: flex;
+  position: absolute;
+  width: 100%;
+  pointer-events: none;
+}
+ 
+/* Aquele span transparente*/
+#slide-thumb > span {
+  flex: 1;
+  display: block;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  margin: 5px;
+  border-radius: 4px;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+#slide-thumb .thumb-item.active {
+  display: block;
+  height: inherit;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  transform: translateX(-100%);
+  animation: thumb forwards linear running;
+}
+
+#slide-thumb .thumb-item.paused {
+  animation-play-state: paused;
+}
+
+@keyframes thumb {
+  to {
+    transform: initial;
+  }
 }

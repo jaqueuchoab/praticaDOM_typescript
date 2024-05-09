@@ -10,7 +10,8 @@ export default class Slide {
   public timeout : Timeout | null;
   public pausedTimeout : Timeout | null;
   public paused : boolean;
-
+  public thumbItems: HTMLElement[] | null;
+  public thumb: HTMLElement | null;
   // O constructor receberá esses argumentos e atenção para o time, onde se não for definido terá um padrão 
   constructor(container: Element, slides: Element[], controls: Element, time: number = 5000) {
     this.container = container;
@@ -23,6 +24,8 @@ export default class Slide {
     this.timeout = null;
     this.pausedTimeout = null;
     this.paused = false;
+    this.thumbItems = null;
+    this.thumb = null;
 
     console.log(this.container, this.slides, this.controls, this.time);
     this.init();
@@ -48,6 +51,14 @@ export default class Slide {
     this.slide = this.slides[this.index];
     // Salvando qual slide está ativo no momento
     localStorage.setItem("activeSlide", String(this.index));
+
+    // Adicionando thumbs e guardando o thumb ativo
+    if(this.thumbItems) {
+      this.thumb = this.thumbItems[this.index];
+      this.thumbItems.forEach((element) => element.classList.remove("active"));
+      this.thumb.classList.add("active");
+    }
+
     // Removendo o active de qualquer outro slide que estivesse ativo
     this.slides.forEach((slide) => this.hide(slide));
     // Adicionando no slide baseado no argumento index, a class active
@@ -55,8 +66,6 @@ export default class Slide {
     // Autoplay dos slides
     // Iniciando configuração de video
     if(this.slide instanceof HTMLVideoElement) {
-      console.log("ocorre");
-      
       this.autoVideo(this.slide);
     } else {
       this.auto(this.time);
@@ -90,6 +99,8 @@ export default class Slide {
     this.timeout?.clear();
     // Inicialização do Timeout
     this.timeout = new Timeout(() => this.next(), time);
+    // Solução para o problema do tempo de duração igual para todos os thumbs
+    if(this.thumb) this.thumb.style.animationDuration = `${time}ms`
   }
 
   // Para o slide anterior button/método
@@ -111,6 +122,10 @@ export default class Slide {
   // Evento de pause do slide
   // Problema ocorrido: apenas qualquer click está fazendo com que seja pausado o slide
   pause() {
+    console.log('pausado');
+    
+    // Pausar configurações padròes do browser
+    document.body.classList.add("paused");
     // Identificar o momento em que houve o pause, e barrar a manipulação via next() e prev()
     // Solucionando problema de click e pause, usando o Timeout, iremos definir uma tempo para verificar se está pausado ou seja se o evento de pointerdown está ocorrendo
     this.pausedTimeout = new Timeout(() => {
@@ -118,6 +133,8 @@ export default class Slide {
       this.pausedTimeout?.pause();
       // Agora será necessario realizar a limpeza do timeout quando não for pausado, limpeza ocorre lá em continue()
       this.paused = true;
+      // Add class de pause no thumb
+      this.thumb?.classList.add("paused");
       // Solucionado problema de pause no video em si, e não só no slide
       if(this.slide instanceof HTMLVideoElement) this.slide.pause();
     }, 300);
@@ -126,11 +143,16 @@ export default class Slide {
   }
 
   continue() {
+    console.log('continuado');
+
+    // Remover configs padrões
+    document.body.classList.remove("paused");
     //Limpar timeout do pause anterior
     this.pausedTimeout?.clear();
     if(this.paused) {
       // Identificar o momento em que o pointer foi solto, e permitir a continuação dos slides mudando pause para false
       this.paused = false;
+      this.thumb?.classList.remove("paused");
       this.pausedTimeout?.continue();
       // Solucionado problema de pause no video em si, agora sendo o continue, pós pause
       if(this.slide instanceof HTMLVideoElement) this.slide.pause();
@@ -154,17 +176,31 @@ export default class Slide {
     // Evento de pause, usando o pointerdown, capturar o momento em que o mouse está pressionado 
     this.controls.addEventListener("pointerdown", () => this.pause());
     // Evento que dá continuação dos slides pós pause
-    this.controls.addEventListener("pointerup", () => this.continue());
-
-
+    document.addEventListener("pointerup", () => this.continue());
+    document.addEventListener("touchend", () => this.continue());
 
     // Adicionando evento e como callback uma chamada por arrow function para evitar o bind
     prevButton.addEventListener("pointerup", () => this.prev());
     nextButton.addEventListener("pointerup", () => this.next());
   }
 
+  private addThumbItems() {
+    // Container com os thumbs
+    const thumbContainer =  document.createElement("div");
+    thumbContainer.id = "slide-thumb";
+    for (let i = 0; i < this.slides.length; i++) {
+      // Gerando tanto o 'tracinho' transparente quanto o que indica o tempo passando
+      thumbContainer.innerHTML += `<span><span class="thumb-item"></span></span>`
+    }
+    // Adicionando o thumbContainer em controls
+    this.controls.appendChild(thumbContainer);
+    // Adicionando props de thumbItems
+    this.thumbItems = Array.from(document.querySelectorAll(".thumb-item"));
+  }
+
   private init() {
     this.addControls();
+    this.addThumbItems();
     this.show(this.index);
   }
 }
